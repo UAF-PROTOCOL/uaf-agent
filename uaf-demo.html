@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Universal Agent Firewall — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0ede8;
+    --muted: #888;
+    --dim: #444;
+    --green: #00e676;
+    --green-dim: rgba(0,230,118,0.08);
+    --green-border: rgba(0,230,118,0.2);
+    --red: #ff4444;
+    --red-dim: rgba(255,68,68,0.08);
+    --red-border: rgba(255,68,68,0.2);
+    --amber: #ffb300;
+    --amber-dim: rgba(255,179,0,0.08);
+    --blue: #4fc3f7;
+    --blue-dim: rgba(79,195,247,0.08);
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; color: var(--green); }
+  .logo span { color: var(--muted); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .live-badge { font-family: var(--mono); font-size: 11px; color: var(--green); display: flex; align-items: center; }
+
+  main { display: grid; grid-template-columns: 340px 1fr; min-height: calc(100vh - 61px); }
+
+  /* LEFT PANEL */
+  .left-panel { border-right: 1px solid var(--border); padding: 28px 24px; display: flex; flex-direction: column; gap: 28px; }
+  .panel-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--dim); margin-bottom: 14px; }
+  
+  .policy-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .policy-title { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 16px; font-family: var(--mono); }
+  
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: var(--mono); }
+  .field input, .field select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 8px 10px; color: var(--text); font-family: var(--mono);
+    font-size: 12px; outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green); }
+  .field select option { background: #1a1a1a; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .toggle-label { font-size: 12px; color: var(--text); }
+  .toggle { width: 36px; height: 20px; background: var(--surface2); border-radius: 10px; border: 1px solid var(--border2); cursor: pointer; position: relative; transition: background 0.2s; }
+  .toggle.on { background: var(--green); border-color: var(--green); }
+  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left 0.2s; }
+  .toggle.on::after { left: 18px; }
+
+  .identity-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .agent-name { font-family: var(--mono); font-size: 13px; color: var(--text); margin-bottom: 4px; }
+  .agent-ens { font-size: 11px; color: var(--blue); margin-bottom: 12px; }
+  .badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; }
+  .badge.green { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+  .badge.blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,195,247,0.2); }
+  .badge.amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(255,179,0,0.2); }
+
+  .run-btn {
+    width: 100%; padding: 12px; background: var(--green); color: #000;
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+    border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+  .run-btn:hover { opacity: 0.9; }
+  .run-btn:active { transform: scale(0.98); }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* RIGHT PANEL */
+  .right-panel { display: flex; flex-direction: column; }
+  .right-top { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+  .pane { padding: 24px; }
+  .pane:first-child { border-right: 1px solid var(--border); }
+
+  .feed-area { flex: 1; padding: 24px; overflow-y: auto; max-height: calc(100vh - 61px - 280px); }
+
+  /* Events */
+  .event {
+    display: flex; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--border); animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+  .event-time { font-family: var(--mono); font-size: 10px; color: var(--dim); white-space: nowrap; padding-top: 2px; min-width: 54px; }
+  .event-body { flex: 1; }
+  .event-action { font-size: 12px; color: var(--text); margin-bottom: 3px; }
+  .event-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .event-status { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 3px; white-space: nowrap; align-self: flex-start; }
+  .event-status.allow { background: var(--green-dim); color: var(--green); }
+  .event-status.block { background: var(--red-dim); color: var(--red); }
+  .event-status.pending { background: var(--amber-dim); color: var(--amber); }
+
+  /* Receipt / proof */
+  .receipt-block {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; font-family: var(--mono); font-size: 10px; margin-top: 10px;
+    color: var(--muted); word-break: break-all; line-height: 1.8;
+  }
+  .receipt-block .key { color: var(--dim); }
+  .receipt-block .val-green { color: var(--green); }
+  .receipt-block .val-red { color: var(--red); }
+  .receipt-block .val-amber { color: var(--amber); }
+  .receipt-block .hash { color: var(--blue); font-size: 9px; }
+
+  /* Stats */
+  .stat { text-align: center; }
+  .stat-num { font-family: var(--mono); font-size: 28px; font-weight: 700; }
+  .stat-num.green { color: var(--green); }
+  .stat-num.red { color: var(--red); }
+  .stat-num.amber { color: var(--amber); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .proof-pane { padding: 24px; border-top: 1px solid var(--border); }
+
+  /* Scenario pills */
+  .scenario-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .pill {
+    font-family: var(--mono); font-size: 10px; padding: 5px 10px; border-radius: 4px;
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .pill:hover { border-color: var(--green); color: var(--green); }
+  .pill.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+  .empty-state { color: var(--dim); font-family: var(--mono); font-size: 11px; padding: 20px 0; }
+
+  @media (max-width: 768px) {
+    main { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
+    .right-top { grid-template-columns: 1fr; }
+    .pane:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">UNIVERSAL<span>/</span>AGENT<span>/</span>FIREWALL</div>
+  <div class="live-badge"><span class="status-dot"></span>FIREWALL ACTIVE</div>
+</header>
+
+<main>
+  <!-- LEFT: Policy + Identity -->
+  <div class="left-panel">
+    <div>
+      <div class="panel-label">// AGENT IDENTITY</div>
+      <div class="identity-card">
+        <div class="agent-name">ClawdIntern v7.5</div>
+        <div class="agent-ens">gmagents.eth · Base Mainnet</div>
+        <div class="badge-row">
+          <span class="badge green">SIWA verified</span>
+          <span class="badge blue">ERC-8004</span>
+          <span class="badge amber">UAF scoped</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">// SPEND POLICY</div>
+      <div class="policy-block">
+        <div class="field">
+          <label>MAX SPEND PER ACTION (USD)</label>
+          <input type="number" id="maxSpend" value="10" min="0.01" step="0.01"/>
+        </div>
+        <div class="field">
+          <label>ALLOWED RECIPIENT</label>
+          <input type="text" id="allowedAddr" value="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" placeholder="0x..."/>
+        </div>
+        <div class="field">
+          <label>SESSION EXPIRES (mins)</label>
+          <input type="number" id="expiry" value="30" min="1"/>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Block metadata leakage</span>
+          <div class="toggle on" id="metaToggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Require proof receipt</span>
+          <div class="toggle on" id="proofToggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">// RUN SCENARIO</div>
+      <div class="scenario-row">
+        <div class="pill active" onclick="selectScenario(this,'normal')">Normal payment</div>
+        <div class="pill" onclick="selectScenario(this,'over')">Over limit</div>
+        <div class="pill" onclick="selectScenario(this,'unknown')">Unknown recipient</div>
+        <div class="pill" onclick="selectScenario(this,'metadata')">Metadata leak</div>
+      </div>
+      <button class="run-btn" id="runBtn" onclick="runScenario()">RUN AGENT ACTION</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: Activity + Stats + Proof -->
+  <div class="right-panel">
+    <div class="right-top">
+      <div class="pane">
+        <div class="panel-label">// FIREWALL STATS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px">
+          <div class="stat"><div class="stat-num green" id="statAllow">0</div><div class="stat-label">allowed</div></div>
+          <div class="stat"><div class="stat-num red" id="statBlock">0</div><div class="stat-label">blocked</div></div>
+          <div class="stat"><div class="stat-num amber" id="statTotal">0</div><div class="stat-label">total</div></div>
+        </div>
+      </div>
+      <div class="pane">
+        <div class="panel-label">// LAST PROOF RECEIPT</div>
+        <div id="lastReceipt" class="receipt-block">
+          <span style="color:var(--dim)">no actions yet — run a scenario</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="feed-area">
+      <div class="panel-label">// LIVE AGENT ACTIVITY FEED</div>
+      <div id="feed"><div class="empty-state">waiting for agent actions...</div></div>
+    </div>
+  </div>
+</main>
+
+<footer style="border-top:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;">
+  <a href="https://github.com/UAF-PROTOCOL" target="_blank" style="font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--muted)'">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+    UAF-PROTOCOL
+  </a>
+  <a href="https://x.com/james_base_eth" target="_blank" style="font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--muted)'">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    @james_base_eth
+  </a>
+</footer>
+
+<script>
+let scenario = 'normal';
+let counts = { allow: 0, block: 0 };
+
+function selectScenario(el, s) {
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  scenario = s;
+}
+
+const scenarios = {
+  normal: {
+    action: 'Transfer 3.50 USDC → allowlisted address',
+    amount: 3.50,
+    recipient: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+    meta: false,
+  },
+  over: {
+    action: 'Transfer 250.00 USDC → allowlisted address',
+    amount: 250.00,
+    recipient: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+    meta: false,
+  },
+  unknown: {
+    action: 'Transfer 5.00 USDC → unknown address',
+    amount: 5.00,
+    recipient: '0xDeadBeef1234567890abcdef1234567890abcdef',
+    meta: false,
+  },
+  metadata: {
+    action: 'API call to third-party service with spend pattern headers',
+    amount: 0,
+    recipient: 'https://external-api.io/track',
+    meta: true,
+  }
+};
+
+function now() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' +
+         d.getMinutes().toString().padStart(2,'0') + ':' +
+         d.getSeconds().toString().padStart(2,'0');
+}
+
+function shortHash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  const hex = Math.abs(h).toString(16).padStart(8,'0');
+  return '0x' + hex + Math.abs(h*7).toString(16).padStart(8,'0') +
+         Math.abs(h*13).toString(16).padStart(8,'0') +
+         Math.abs(h*31).toString(16).padStart(8,'0');
+}
+
+function evaluate(s) {
+  const maxSpend = parseFloat(document.getElementById('maxSpend').value) || 10;
+  const allowedAddr = document.getElementById('allowedAddr').value.toLowerCase().trim();
+  const metaBlock = document.getElementById('metaToggle').classList.contains('on');
+
+  if (s.meta && metaBlock) return { verdict: 'block', reason: 'Metadata leakage intercepted by UAF' };
+  if (s.amount > maxSpend) return { verdict: 'block', reason: `Amount $${s.amount} exceeds policy limit $${maxSpend}` };
+  if (s.amount > 0 && s.recipient.toLowerCase() !== allowedAddr) return { verdict: 'block', reason: 'Recipient not in allowlist' };
+  return { verdict: 'allow', reason: 'All policy checks passed' };
+}
+
+function runScenario() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'INTERCEPTING...';
+
+  setTimeout(() => {
+    const s = scenarios[scenario];
+    const t = now();
+    const { verdict, reason } = evaluate(s);
+    const requireProof = document.getElementById('proofToggle').classList.contains('on');
+
+    // Update counts
+    if (verdict === 'allow') counts.allow++; else counts.block++;
+    document.getElementById('statAllow').textContent = counts.allow;
+    document.getElementById('statBlock').textContent = counts.block;
+    document.getElementById('statTotal').textContent = counts.allow + counts.block;
+
+    // Build receipt
+    const receiptData = {
+      agent: 'gmagents.eth',
+      action: s.action,
+      amount: s.amount > 0 ? '$' + s.amount.toFixed(2) : 'n/a',
+      recipient: s.recipient.length > 20 ? s.recipient.slice(0,10)+'...'+s.recipient.slice(-8) : s.recipient,
+      verdict: verdict,
+      reason: reason,
+      timestamp: new Date().toISOString(),
+      policy_hash: shortHash('policy' + document.getElementById('maxSpend').value),
+    };
+    const receiptHash = shortHash(JSON.stringify(receiptData) + t);
+
+    // Add to feed
+    const feed = document.getElementById('feed');
+    if (feed.querySelector('.empty-state')) feed.innerHTML = '';
+
+    const ev = document.createElement('div');
+    ev.className = 'event';
+    ev.innerHTML = `
+      <div class="event-time">${t}</div>
+      <div class="event-body">
+        <div class="event-action">${s.action}</div>
+        <div class="event-meta">${reason}</div>
+        ${requireProof ? `<div class="event-meta" style="color:var(--blue);margin-top:2px">receipt: ${receiptHash.slice(0,26)}...</div>` : ''}
+      </div>
+      <div class="event-status ${verdict}">${verdict.toUpperCase()}</div>
+    `;
+    feed.prepend(ev);
+
+    // Update receipt panel
+    if (requireProof) {
+      document.getElementById('lastReceipt').innerHTML = `
+        <span class="key">agent      </span><span>${receiptData.agent}</span><br>
+        <span class="key">action     </span><span>${receiptData.action.slice(0,38)}</span><br>
+        <span class="key">amount     </span><span>${receiptData.amount}</span><br>
+        <span class="key">verdict    </span><span class="${verdict === 'allow' ? 'val-green' : 'val-red'}">${receiptData.verdict.toUpperCase()}</span><br>
+        <span class="key">reason     </span><span>${receiptData.reason}</span><br>
+        <span class="key">timestamp  </span><span>${receiptData.timestamp}</span><br>
+        <span class="key">proof      </span><span class="hash">${receiptHash}</span>
+      `;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'RUN AGENT ACTION';
+  }, 900);
+}
+</script>
+</body>
+</html>
