@@ -2,7 +2,7 @@
 
 > Black box agents become glass box agents.
 
-Live demo: [uaf-protocol.github.io/uaf-demo](https://uaf-protocol.github.io/uaf-agent)
+Live demo: [uaf-protocol.github.io/uaf-agent](https://uaf-protocol.github.io/uaf-agent)
 
 ---
 
@@ -60,7 +60,7 @@ UAF intercepts outbound API calls before they leave. If your spending patterns o
 
 ## Live Demo
 
-Try all 4 scenarios at [uaf-protocol.github.io/uaf-demo](https://uaf-protocol.github.io/uaf-demo)
+Try all 4 scenarios at [uaf-protocol.github.io/uaf-agent](https://uaf-protocol.github.io/uaf-agent)
 
 | Scenario | What happens |
 |---|---|
