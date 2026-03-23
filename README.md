@@ -2,7 +2,7 @@
 
 > Black box agents become glass box agents.
 
-Live demo: [uaf-protocol.github.io/uaf-demo](https://uaf-protocol.github.io/uaf-demo)
+Live demo: [uaf-protocol.github.io/uaf-demo](https://uaf-protocol.github.io/uaf-agent)
 
 ---
 
